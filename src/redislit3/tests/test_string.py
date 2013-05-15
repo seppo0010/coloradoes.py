@@ -104,3 +104,40 @@ class TestStorage(unittest.TestCase):
                     'key2'))
         self.assertEqual(self.values, [True, True, True, True,
                 ['0', '1', '3', '2']])
+
+    def test_bitcount(self):
+        self.values.append(self.database.command_set('key', '0'))
+        self.values.append(self.database.command_bitcount('key'))
+        self.values.append(self.database.command_set('key', 'hello world'))
+        self.values.append(self.database.command_bitcount('key'))
+        self.values.append(self.database.command_bitcount('key', 0, 5))
+        self.assertEqual(self.values, [True, 2, True, 45, 22])
+
+    def test_bitop_and(self):
+        self.values.append(self.database.command_set('key1', 'abcdef'))
+        self.values.append(self.database.command_set('key2', 'foobar'))
+        self.values.append(self.database.command_bitop('and', 'key3', 'key1', 'key2'))
+        self.values.append(self.database.command_get('key3'))
+        self.assertEqual(self.values, [True, True, 6, '`bc`ab'])
+
+    def test_bitop_or(self):
+        self.values.append(self.database.command_set('key1', 'foobar'))
+        self.values.append(self.database.command_set('key2', 'abcdef'))
+        self.values.append(self.database.command_set('key3', 'barbaz'))
+        self.values.append(self.database.command_bitop('or', 'key4', 'key1',
+                    'key2', 'key3'))
+        self.values.append(self.database.command_get('key4'))
+
+    def test_bitop_xor(self):
+        self.values.append(self.database.command_set('key1', 'foo'))
+        self.values.append(self.database.command_set('key2', 'abcdef'))
+        self.values.append(self.database.command_bitop('xor', 'key3', 'key1',
+                    'key2'))
+        self.values.append(self.database.command_get('key3'))
+        self.assertEqual(self.values, [True, True, 6, '\a\r\x0cdef'])
+
+    def test_bitop_not(self):
+        self.values.append(self.database.command_set('key1', 'foo'))
+        self.values.append(self.database.command_bitop('not', 'key2', 'key1'))
+        self.values.append(self.database.command_get('key2'))
+        self.assertEqual(self.values, [True, 3, '\x99\x90\x90'])

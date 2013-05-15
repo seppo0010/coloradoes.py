@@ -1,6 +1,8 @@
 import struct
 import time
 
+SYNTAX_ERROR = 'syntax error'
+SINGLE_SOURCE_KEY = '{} must be called with a single source key.'
 WRONG_TYPE = 'Operation against a key holding the wrong kind of value'
 WRONG_NUMBER_OF_ARGUMENTS = 'wrong number of arguments for {}'
 
@@ -176,3 +178,50 @@ class Redislit3(object):
         if len(args) % 2 == 1:
             raise ValueError(WRONG_NUMBER_OF_ARGUMENTS.format('MSETNX'))
         return self.command_mset(*args, replace=False)
+
+    def command_bitcount(self, key, start=None, end=None):
+        if start is not None and end is None:
+            raise ValueError(WRONG_NUMBER_OF_ARGUMENTS.format('BITCOUNT'))
+        if start is None:
+            content = self.command_get(key)
+        else:
+            content = self.command_getrange(key, start, end)
+
+        if not content:
+            return 0
+
+        total = 0
+        for byte in content:
+            total += bin(ord(byte)).count('1')
+        return total
+
+    def command_bitop(self, operation, destkey, *keys):
+        op = operation.upper()
+        if op == 'NOT':
+            if len(keys) != 1:
+                raise ValueError(SINGLE_SOURCE_KEY.format('BITOP NOT'))
+        elif op not in ('AND', 'OR', 'XOR'):
+            raise ValueError(SYNTAX_ERROR)
+
+        values = [self.command_get(key) for key in keys]
+        length = max((lambda x: len(x) if x else 0)(x) for x in values)
+        result = None
+        for value in values:
+            v = value.ljust(length, '\0')
+            if result is None:
+                result = v
+            else:
+                new_result = ''
+                for i in range(0, length):
+                    if op == 'AND':
+                        new_result += chr(ord(result[i]) & ord(v[i]))
+                    elif op == 'OR':
+                        new_result += chr(ord(result[i]) | ord(v[i]))
+                    elif op == 'XOR':
+                        new_result += chr(ord(result[i]) ^ ord(v[i]))
+                result = new_result
+        if op == 'NOT':
+            result = ''.join((chr((~ord(c) + 256) % 256) for c in result))
+        self.command_set(destkey, result)
+
+        return length
