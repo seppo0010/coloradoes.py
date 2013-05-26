@@ -5,6 +5,7 @@ SYNTAX_ERROR = 'syntax error'
 SINGLE_SOURCE_KEY = '{} must be called with a single source key.'
 WRONG_TYPE = 'Operation against a key holding the wrong kind of value'
 WRONG_NUMBER_OF_ARGUMENTS = 'wrong number of arguments for {}'
+INVALID_DB_INDEX = 'invalid DB index'
 
 
 class Redislit3(object):
@@ -13,28 +14,34 @@ class Redislit3(object):
             raise ValueError('A storage is required')
         super(Redislit3, self).__init__()
         self.storage = storage
+        self.database = 0
+
+    def set_database(self, database):
+        self.database = database
 
     def get_id(self):
-        return self.storage.increment_by('id', 1)
+        return self.storage.increment_by(struct.pack('!i', self.database) +
+                'id', 1)
 
     def set_key(self, key, type, expire=None):
         self.command_del(key)
         id = self.get_id()
+        k = struct.pack('!i', self.database) + 'K' + key
         if expire is None:
-            self.storage.set('K' + key, struct.pack('!ic', id, type))
+            self.storage.set(k, struct.pack('!ic', id, type))
         else:
-            self.storage.set('K' + key, struct.pack('!icd', id, type, expire))
+            self.storage.set(k, struct.pack('!icd', id, type, expire))
         return id
 
     def delete_key(self, key, id=None, type=None):
         if id is None or type is None:
             id, type, expire = self.get_key(key, delete_expire=False)
-        self.storage.delete('K' + key)
+        self.storage.delete(struct.pack('!i', self.database) + 'K' + key)
         # Do any type cleanup here
-        self.storage.delete(struct.pack('!ci', type, id))
+        self.storage.delete(struct.pack('!ici', self.database, type, id))
 
     def get_key(self, key, delete_expire=True):
-        data = self.storage.get('K' + key)
+        data = self.storage.get(struct.pack('!i', self.database) + 'K' + key)
         id, type, expire = None, None, None
         if data is not None:
             if len(data) == 13:
@@ -51,6 +58,17 @@ class Redislit3(object):
                 self.delete_key(key=key, id=id, type=type)
 
         return id, type, expire
+
+    def str_key(self, id):
+        return struct.pack('!ici', self.database, 'S', id)
+
+    def command_select(self, database):
+        d = int(database)
+        if d >= 0 and d < 17:
+            self.set_database(d)
+            return True
+        else:
+            raise ValueError(INVALID_DB_INDEX)
 
     def command_setex(self, key, ttl, value):
         return self.command_set(key, value, expire=time.time() + float(ttl))
@@ -72,7 +90,7 @@ class Redislit3(object):
                 return False
             self.delete_key(key, id=old_id, type=old_type)
         id = self.set_key(key, 'S', expire=expire)
-        self.storage.set(struct.pack('!ci', 'S', id), value)
+        self.storage.set(self.str_key(id), value)
         return True
 
     def command_get(self, key):
@@ -81,7 +99,7 @@ class Redislit3(object):
             return None
         if type != 'S':
             raise ValueError(WRONG_TYPE)
-        return self.storage.get(struct.pack('!ci', 'S', id))
+        return self.storage.get(self.str_key(id))
 
     def command_del(self, *args):
         deleted = 0
@@ -98,7 +116,7 @@ class Redislit3(object):
             return self.command_set(key, value)
         if type != 'S':
             raise ValueError(WRONG_TYPE)
-        str_key = struct.pack('!ci', 'S', id)
+        str_key = self.str_key(id)
         old_value = self.storage.get(str_key)
         new_value = old_value + value
         self.storage.set(str_key, new_value)
@@ -114,7 +132,7 @@ class Redislit3(object):
             end = None
         else:
             end += 1
-        return self.storage.get(struct.pack('!ci', 'S', id))[start:end]
+        return self.storage.get(self.str_key(id))[start:end]
 
     def command_getset(self, key, value):
         old_value = self.command_get(key)
@@ -128,7 +146,7 @@ class Redislit3(object):
             return str(increment)
         if type != 'S':
             raise ValueError(WRONG_TYPE)
-        return str(self.storage.increment_by(struct.pack('!ci', 'S', id),
+        return str(self.storage.increment_by(self.str_key(id),
                     int(increment)))
 
     def command_incr(self, key):
@@ -147,7 +165,7 @@ class Redislit3(object):
             return str(increment)
         if type != 'S':
             raise ValueError(WRONG_TYPE)
-        return str(self.storage.increment_by(struct.pack('!ci', 'S', id),
+        return str(self.storage.increment_by(self.str_key(id),
                     float(increment)))
 
     def command_strlen(self, key):
