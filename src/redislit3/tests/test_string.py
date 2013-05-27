@@ -48,6 +48,26 @@ class TestStorage(unittest.TestCase):
         self.assertEqual(self.values, [True, 'value', 'value', 'alue', 'v', '',
                 'value', 'valu'])
 
+    def test_setrange(self):
+        self.values.append(self.database.command_set('key', 'value'))
+        self.values.append(self.database.command_setrange('key', 0,
+                    'hello world'))
+        self.values.append(self.database.command_get('key'))
+        self.values.append(self.database.command_setrange('key', 6, 'bro'))
+        self.values.append(self.database.command_get('key'))
+        self.assertEqual(self.values, [True, 11, 'hello world', 11,
+                'hello brold'])
+
+    def test_getbit_setbit(self):
+        self.values.append(self.database.command_set('key', 'abc'))
+        self.values.append(self.database.command_getbit('key', 21))
+        self.values.append(self.database.command_getbit('key', 22))
+        self.values.append(self.database.command_getbit('key', 23))
+        self.values.append(self.database.command_getbit('key', 24))
+        self.values.append(self.database.command_setbit('key', 22, '0'))
+        self.values.append(self.database.command_get('key'))
+        self.assertEqual(self.values, [True, 0, 1, 1, 0, 3, 'aba'])
+
     def test_getset(self):
         self.values.append(self.database.command_set('key', 'value'))
         self.values.append(self.database.command_getset('key', 'value2'))

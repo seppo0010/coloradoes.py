@@ -134,6 +134,18 @@ class Redislit3(object):
             end += 1
         return self.storage.get(self.str_key(id))[start:end]
 
+    def command_setrange(self, key, start, value):
+        id, type, expire = self.get_key(key)
+        if id is None:
+            return ''
+        if type != 'S':
+            raise ValueError(WRONG_TYPE)
+        str_key = self.str_key(id)
+        old_value = self.storage.get(self.str_key(id))
+        new_value = old_value[:start] + value + old_value[start + len(value):]
+        self.storage.set(self.str_key(id), new_value)
+        return len(new_value)
+
     def command_getset(self, key, value):
         old_value = self.command_get(key)
         self.command_set(key, value)
@@ -243,3 +255,25 @@ class Redislit3(object):
         self.command_set(destkey, result)
 
         return length
+
+    def command_getbit(self, key, offset):
+        bitoffset = int(offset)
+        value = self.command_get(key)
+        byte = bitoffset >> 3
+        bit = 7 - (bitoffset & 0x7)
+        if len(value) <= byte:
+            return 0
+        return int(bool((ord(value[byte]) & (1 << bit))))
+
+    def command_setbit(self, key, offset, onoff):
+        bitoffset = int(offset)
+        value = self.command_get(key)
+        byte = bitoffset >> 3
+        bit = 7 - (bitoffset & 0x7)
+        if onoff == '1':
+            new_char = chr(ord(value[byte]) | (1 << bit))
+        else:
+            new_char = chr((ord(value[byte]) & ~(1 << bit)) % 256)
+        new_value = new_char.join((value[:byte], value[byte + 1:]))
+        self.command_set(key, new_value)
+        return len(new_value)
