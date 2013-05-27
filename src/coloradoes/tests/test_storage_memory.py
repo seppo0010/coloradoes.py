@@ -1,5 +1,5 @@
 import unittest
-from redislit3.storage.memory import Storage
+from ..storage.memory import Storage
 
 
 class TestStorage(unittest.TestCase):

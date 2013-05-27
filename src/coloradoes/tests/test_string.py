@@ -1,14 +1,14 @@
 import time
 import unittest
 
-from redislit3 import Redislit3
-from redislit3.storage.memory import Storage
+from .. import Coloradoes
+from ..storage.memory import Storage
 
 
 class TestStorage(unittest.TestCase):
     def setUp(self):
         super(TestStorage, self).setUp()
-        self.database = Redislit3(Storage())
+        self.database = Coloradoes(Storage())
         self.values = []
 
     def test_set_get(self):

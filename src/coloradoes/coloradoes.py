@@ -4,7 +4,7 @@ import time
 from .types import string
 from .errors import *
 
-class Redislit3(object):
+class Coloradoes(object):
     STRUCT_KEY = '!ic'
     STRUCT_KEY_VALUE = '!icd'
     STRUCT_ID = '!i'
@@ -12,7 +12,7 @@ class Redislit3(object):
     def __init__(self, storage=None):
         if storage is None:
             raise ValueError('A storage is required')
-        super(Redislit3, self).__init__()
+        super(Coloradoes, self).__init__()
         self.storage = storage
         self.database = 0
 
