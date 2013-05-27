@@ -181,16 +181,10 @@ class Redislit3(object):
                     float(increment)))
 
     def command_strlen(self, key):
-        value = self.command_get(key)
-        if value is None:
-            return 0
-        return len(value)
+        return len(self.command_get(key) or '')
 
     def command_mget(self, *args):
-        response = []
-        for key in args:
-            response.append(self.command_get(key))
-        return response
+        return [self.command_get(key) for key in args]
 
     def command_mset(self, *args, **kwargs):
         if len(args) % 2 == 1:
