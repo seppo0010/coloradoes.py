@@ -1,0 +1,5 @@
+SYNTAX_ERROR = 'syntax error'
+SINGLE_SOURCE_KEY = '{} must be called with a single source key.'
+WRONG_TYPE = 'Operation against a key holding the wrong kind of value'
+WRONG_NUMBER_OF_ARGUMENTS = 'wrong number of arguments for {}'
+INVALID_DB_INDEX = 'invalid DB index'
