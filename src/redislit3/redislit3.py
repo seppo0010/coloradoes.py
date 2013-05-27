@@ -9,6 +9,11 @@ INVALID_DB_INDEX = 'invalid DB index'
 
 
 class Redislit3(object):
+    STRUCT_KEY = '!ic'
+    STRUCT_KEY_VALUE = '!icd'
+    STRUCT_ID = '!i'
+    STRUCT_STRING = '!ici'
+
     def __init__(self, storage=None):
         if storage is None:
             raise ValueError('A storage is required')
@@ -20,37 +25,34 @@ class Redislit3(object):
         self.database = database
 
     def get_id(self):
-        return self.storage.increment_by(struct.pack('!i', self.database) +
-                'id', 1)
+        return self.storage.increment_by(struct.pack(self.STRUCT_ID,
+                    self.database) + 'id', 1)
 
     def set_key(self, key, type, expire=None):
         self.command_del(key)
         id = self.get_id()
-        k = struct.pack('!i', self.database) + 'K' + key
-        if expire is None:
-            self.storage.set(k, struct.pack('!ic', id, type))
-        else:
-            self.storage.set(k, struct.pack('!icd', id, type, expire))
+        k = struct.pack(self.STRUCT_KEY, self.database, 'K') + key
+        self.storage.set(k, struct.pack(self.STRUCT_KEY_VALUE, id, type,
+                    expire or 0))
         return id
 
     def delete_key(self, key, id=None, type=None):
         if id is None or type is None:
-            id, type, expire = self.get_key(key, delete_expire=False)
-        self.storage.delete(struct.pack('!i', self.database) + 'K' + key)
+            id, type = self.get_key(key, delete_expire=False)[:2]
+        self.storage.delete(struct.pack(self.STRUCT_KEY, self.database, 'K') +
+                key)
         # Do any type cleanup here
+        # TODO: call type-specific clean up method
         self.storage.delete(struct.pack('!ici', self.database, type, id))
 
     def get_key(self, key, delete_expire=True):
-        data = self.storage.get(struct.pack('!i', self.database) + 'K' + key)
+        data = self.storage.get(struct.pack(self.STRUCT_KEY, self.database,
+                'K') + key)
         id, type, expire = None, None, None
         if data is not None:
-            if len(data) == 13:
-                id, type, expire = struct.unpack('!icd', data)
-            elif len(data) == 5:
+            id, type, expire = struct.unpack(self.STRUCT_KEY_VALUE, data)
+            if expire == 0:
                 expire = None
-                id, type = struct.unpack('!ic', data)
-            else:
-                raise ValueError('Key has an invalid length')
 
             if delete_expire is True and (expire is not None and
                     expire < time.time()):
@@ -60,7 +62,7 @@ class Redislit3(object):
         return id, type, expire
 
     def str_key(self, id):
-        return struct.pack('!ici', self.database, 'S', id)
+        return struct.pack(self.STRUCT_STRING, self.database, 'S', id)
 
     def command_select(self, database):
         d = int(database)
@@ -84,7 +86,7 @@ class Redislit3(object):
         return self.command_set(key, value, replace=False)
 
     def command_set(self, key, value, expire=None, replace=True):
-        old_id, old_type, old_expire = self.get_key(key)
+        old_id, old_type = self.get_key(key)[:2]
         if old_id is not None:
             if not replace:
                 return False
@@ -94,7 +96,7 @@ class Redislit3(object):
         return True
 
     def command_get(self, key):
-        id, type, expire = self.get_key(key)
+        id, type = self.get_key(key)[:2]
         if id is None:
             return None
         if type != 'S':
@@ -104,14 +106,14 @@ class Redislit3(object):
     def command_del(self, *args):
         deleted = 0
         for key in args:
-            id, type, expire = self.get_key(key)
+            id, type = self.get_key(key)[:2]
             if id is not None:
                 self.delete_key(key, id=id, type=type)
                 deleted += 1
         return deleted
 
     def command_append(self, key, value):
-        id, type, expire = self.get_key(key)
+        id, type = self.get_key(key)[:2]
         if id is None:
             return self.command_set(key, value)
         if type != 'S':
@@ -123,7 +125,7 @@ class Redislit3(object):
         return len(new_value)
 
     def command_getrange(self, key, start=0, end=-1):
-        id, type, expire = self.get_key(key)
+        id, type = self.get_key(key)[:2]
         if id is None:
             return ''
         if type != 'S':
@@ -135,7 +137,7 @@ class Redislit3(object):
         return self.storage.get(self.str_key(id))[start:end]
 
     def command_setrange(self, key, start, value):
-        id, type, expire = self.get_key(key)
+        id, type = self.get_key(key)[:2]
         if id is None:
             return ''
         if type != 'S':
@@ -152,7 +154,7 @@ class Redislit3(object):
         return old_value
 
     def command_incrby(self, key, increment):
-        id, type, expire = self.get_key(key)
+        id, type = self.get_key(key)[:2]
         if id is None:
             self.command_set(key, int(increment))
             return str(increment)
@@ -171,7 +173,7 @@ class Redislit3(object):
         return self.command_incrby(key, -int(decrement))
 
     def command_incrbyfloat(self, key, increment):
-        id, type, expire = self.get_key(key)
+        id, type = self.get_key(key)[:2]
         if id is None:
             self.command_set(key, float(increment))
             return str(increment)
