@@ -81,3 +81,14 @@ def command_lrange(db, key, start, end):
 
     return [db.storage.get(_key(db, id, i)) for i in
             range(left, right + 1)]
+
+def command_lindex(db, key, index):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return None
+    if type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    info = _get_info(db, id)
+    if index < 0 and info['right'] - info['left'] < - 1 - index: return None
+    pos = _get_pos(index, info)
+    return db.storage.get(_key(db, id, pos))

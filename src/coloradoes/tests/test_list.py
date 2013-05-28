@@ -65,3 +65,15 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_lrange('key', 0, -1))
         self.assertEqual(self.values, [[], None, None, None, None,
                 ['value1', 'value2', 'value3', 'value4']])
+
+    def test_lindex(self):
+        self.values.append(self.database.command_rpush('key', 'value1'))
+        self.values.append(self.database.command_rpush('key', 'value2'))
+        self.values.append(self.database.command_rpush('key', 'value3'))
+        self.values.append(self.database.command_rpush('key', 'value4'))
+        self.values.append(self.database.command_lindex('key', 0))
+        self.values.append(self.database.command_lindex('key', 3))
+        self.values.append(self.database.command_lindex('key', -1))
+        self.values.append(self.database.command_lindex('key', -5))
+        self.assertEqual(self.values, [None, None, None, None, 'value1',
+                'value4', 'value4', None])
