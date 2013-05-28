@@ -25,3 +25,7 @@ class Storage(object):
             return False
         del self.keys[key]
         return True
+
+    def rename(self, source, target):
+        self.keys[target] = self.keys[source]
+        del self.keys[source]

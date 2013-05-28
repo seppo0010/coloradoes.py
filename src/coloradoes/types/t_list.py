@@ -95,3 +95,24 @@ def command_lindex(db, key, _index):
     if index < 0 and info['right'] - info['left'] < - 1 - index: return None
     pos = _get_pos(index, info)
     return db.storage.get(_key(db, id, pos))
+
+def command_linsert(db, key, position, pivot, value):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return None
+    if type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    if position.upper() not in ('BEFORE', 'AFTER'):
+        raise ValueError(SYNTAX_ERROR)
+    pos = int(position.upper() == 'AFTER')
+    info = _get_info(db, id)
+
+    for i in range(info['left'], info['right'] + 1):
+        if db.storage.get(_key(db, id, i)) == pivot:
+            for j in range(info['left'], i + pos):
+                db.storage.rename(_key(db, id, j), _key(db, id, j - 1))
+            db.storage.set(_key(db, id, i + pos - 1), value)
+            _set_info(db, id, info['left'] - 1, info['right'])
+            return info['right'] - info['left'] + 2
+    return -1
