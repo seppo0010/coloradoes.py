@@ -167,3 +167,31 @@ def command_rpoplpush(db, source, destination):
     if value is not None:
         _push(db, destination, value, -1)
     return value
+
+def command_lrem(db, key, _count, value):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return 0
+    if type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    count = int(_count)
+    info = _get_info(db, id)
+    deleted = 0
+    if count >= 0:
+        lookup = range(info['left'], info['right'] + 1)
+    else:
+        lookup = range(info['right'], info['left'] - 1, -1)
+    sign = 1 if count >= 0 else -1
+    target =  sign * count
+
+    for pos in lookup:
+        key = _key(db, id, pos)
+        if db.storage.get(key) == value and (target > deleted or target == 0):
+            deleted += 1
+        elif deleted > 0:
+            db.storage.rename(key, _key(db, id, pos - sign * deleted))
+    if sign == 1:
+        _set_info(db, id, info['left'], info['right'] - deleted)
+    else:
+        _set_info(db, id, info['left'] + deleted, info['right'])
+    return deleted

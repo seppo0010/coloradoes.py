@@ -160,3 +160,30 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_lpushx('key', 'value1'))
         self.values.append(self.database.command_lrange('key', 0, -1))
         self.assertEqual(self.values, [0, None, 2, ['value1', 'value0']])
+
+    def test_lrem(self):
+        values = ['a', 'b', 'c', 'd', 'a', 'b', 'c', 'd', 'a', 'b']
+        for v in values:
+            self.database.command_rpush('key', v)
+        self.values.append(self.database.command_lrem('key', '2', 'a'))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        values.remove('a')
+        values.remove('a')
+        self.assertEqual(self.values, [2, values])
+        self.values = []
+        self.values.append(self.database.command_lrem('key', '-1', 'b'))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        values = values[:-1]
+        self.assertEqual(self.values, [1, values])
+        self.values = []
+        self.values.append(self.database.command_lrem('key', '5', 'c'))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        values.remove('c')
+        values.remove('c')
+        self.assertEqual(self.values, [2, values])
+        self.values = []
+        self.values.append(self.database.command_lrem('key', '0', 'd'))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        values.remove('d')
+        values.remove('d')
+        self.assertEqual(self.values, [2, values])
