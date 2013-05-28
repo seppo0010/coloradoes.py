@@ -39,7 +39,7 @@ def _get_pos(pos, info):
 def _push(db, key, value, pos, create=True):
     id, type = db.get_key(key)[:2]
     if not create and type is None:
-        return False
+        return 0
 
     if type not in (None, TYPE):
         raise ValueError(WRONG_TYPE)
@@ -49,6 +49,7 @@ def _push(db, key, value, pos, create=True):
         id = db.set_key(key, 'L')
         db.storage.set(_key(db, id, 0), value)
         _set_info(db, id, 0, 0)
+        left, right = 0, 0
     else:
         if pos == -1:
             left = info['left'] - 1
@@ -59,7 +60,7 @@ def _push(db, key, value, pos, create=True):
             right = info['right'] + 1
             db.storage.set(_key(db, id, right), value)
         _set_info(db, id, left, right)
-    return True
+    return right - left + 1
 
 def _pop(db, key_name, pos):
     id, type = db.get_key(key_name)[:2]
@@ -89,6 +90,12 @@ def command_lpush(db, key, value):
 
 def command_rpush(db, key, value):
     _push(db, key, value, 1)
+
+def command_lpushx(db, key, value):
+    return _push(db, key, value, -1, create=False)
+
+def command_rpushx(db, key, value):
+    return _push(db, key, value, 1, create=False)
 
 def command_lrange(db, key, _start, _end):
     id, type = db.get_key(key)[:2]
