@@ -64,6 +64,16 @@ class Coloradoes(object):
         else:
             raise ValueError(INVALID_DB_INDEX)
 
+    def command_type(self, key):
+        type = self.get_key(key)[1]
+        if type is None:
+            return 'none'
+        if type == 'S':
+            return 'string'
+        if type == 'L':
+            return 'list'
+        raise Exception('Unknown type "%s"', type)
+
     def __getattr__(self, attrName):
         if attrName not in self.__dict__:
             if attrName.startswith('command_'):

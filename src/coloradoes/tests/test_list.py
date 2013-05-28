@@ -107,3 +107,27 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_rpush('key', 'value4'))
         self.values.append(self.database.command_llen('key'))
         self.assertEqual(self.values, [0, None, 1, None, 2, None, 3, None, 4])
+
+    def test_lpop(self):
+        self.values.append(self.database.command_lpop('key'))
+        self.values.append(self.database.command_rpush('key', 'value1'))
+        self.values.append(self.database.command_rpush('key', 'value2'))
+        self.values.append(self.database.command_rpush('key', 'value3'))
+        self.values.append(self.database.command_lpop('key'))
+        self.values.append(self.database.command_lpop('key'))
+        self.values.append(self.database.command_lpop('key'))
+        self.values.append(self.database.command_type('key'))
+        self.assertEqual(self.values, [None, None, None, None, 'value1',
+                'value2', 'value3', 'none'])
+
+    def test_rpop(self):
+        self.values.append(self.database.command_rpop('key'))
+        self.values.append(self.database.command_rpush('key', 'value1'))
+        self.values.append(self.database.command_rpush('key', 'value2'))
+        self.values.append(self.database.command_rpush('key', 'value3'))
+        self.values.append(self.database.command_rpop('key'))
+        self.values.append(self.database.command_rpop('key'))
+        self.values.append(self.database.command_rpop('key'))
+        self.values.append(self.database.command_type('key'))
+        self.assertEqual(self.values, [None, None, None, None, 'value3',
+                'value2', 'value1', 'none'])

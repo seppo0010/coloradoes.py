@@ -61,6 +61,29 @@ def _push(db, key, value, pos, create=True):
         _set_info(db, id, left, right)
     return True
 
+def _pop(db, key_name, pos):
+    id, type = db.get_key(key_name)[:2]
+    if type is None:
+        return None
+    if type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    info = _get_info(db, id)
+    left, right = info['left'], info['right']
+    if pos == -1:
+        index = left
+        left += 1
+    else:
+        index = right
+        right -= 1
+    key = _key(db, id, index)
+    value = db.storage.get(key)
+    db.storage.delete(key)
+    if right < left:
+        db.delete_key(key_name, id=id, type=type)
+    else:
+        _set_info(db, id, left, right)
+    return value
+
 def command_lpush(db, key, value):
     _push(db, key, value, -1)
 
@@ -125,3 +148,9 @@ def command_llen(db, key):
         raise ValueError(WRONG_TYPE)
     info = _get_info(db, id)
     return info['right'] - info['left'] + 1
+
+def command_lpop(db, key):
+    return _pop(db, key, -1)
+
+def command_rpop(db, key):
+    return _pop(db, key, 1)
