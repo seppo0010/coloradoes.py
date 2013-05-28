@@ -131,3 +131,18 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_type('key'))
         self.assertEqual(self.values, [None, None, None, None, 'value3',
                 'value2', 'value1', 'none'])
+
+    def test_rpoplpush(self):
+        self.values.append(self.database.command_rpush('key1', 'value1'))
+        self.values.append(self.database.command_rpush('key1', 'value2'))
+        self.values.append(self.database.command_rpush('key1', 'value3'))
+        self.values.append(self.database.command_rpoplpush('key1', 'key2'))
+        self.values.append(self.database.command_rpoplpush('key1', 'key2'))
+        self.values.append(self.database.command_rpoplpush('key1', 'key2'))
+        self.values.append(self.database.command_rpoplpush('key1', 'key2'))
+        self.values.append(self.database.command_type('key1'))
+        self.values.append(self.database.command_lrange('key2', 0, -1))
+        self.assertEqual(self.values, [None, None, None, 'value3',
+                'value2', 'value1', None, 'none',
+                ['value1', 'value2', 'value3']
+                ])

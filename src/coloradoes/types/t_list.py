@@ -154,3 +154,9 @@ def command_lpop(db, key):
 
 def command_rpop(db, key):
     return _pop(db, key, 1)
+
+def command_rpoplpush(db, source, destination):
+    value = _pop(db, source, 1)
+    if value is not None:
+        _push(db, destination, value, -1)
+    return value
