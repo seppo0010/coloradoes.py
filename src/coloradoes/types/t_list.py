@@ -67,7 +67,7 @@ def command_lpush(db, key, value):
 def command_rpush(db, key, value):
     _push(db, key, value, 1)
 
-def command_lrange(db, key, start, end):
+def command_lrange(db, key, _start, _end):
     id, type = db.get_key(key)[:2]
     if type is None:
         return []
@@ -75,6 +75,7 @@ def command_lrange(db, key, start, end):
         raise ValueError(WRONG_TYPE)
     info = _get_info(db, id)
 
+    start, end = int(_start), int(_end)
     # Ends in a position before the first one?
     if end < 0 and info['right'] - info['left'] < - 1 - end: return []
     left, right = _get_pos(start, info), _get_pos(end, info)
@@ -82,13 +83,15 @@ def command_lrange(db, key, start, end):
     return [db.storage.get(_key(db, id, i)) for i in
             range(left, right + 1)]
 
-def command_lindex(db, key, index):
+def command_lindex(db, key, _index):
     id, type = db.get_key(key)[:2]
     if type is None:
         return None
     if type != TYPE:
         raise ValueError(WRONG_TYPE)
     info = _get_info(db, id)
+
+    index = int(_index)
     if index < 0 and info['right'] - info['left'] < - 1 - index: return None
     pos = _get_pos(index, info)
     return db.storage.get(_key(db, id, pos))
