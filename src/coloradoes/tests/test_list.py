@@ -95,3 +95,15 @@ class TestStorage(unittest.TestCase):
                     'value1', 'value1.5'))
         self.values.append(self.database.command_lrange('key', 0, 2))
         self.assertEqual(self.values, [6, ['value1', 'value1.5', 'value2']])
+
+    def test_llen(self):
+        self.values.append(self.database.command_llen('key'))
+        self.values.append(self.database.command_rpush('key', 'value1'))
+        self.values.append(self.database.command_llen('key'))
+        self.values.append(self.database.command_rpush('key', 'value2'))
+        self.values.append(self.database.command_llen('key'))
+        self.values.append(self.database.command_rpush('key', 'value3'))
+        self.values.append(self.database.command_llen('key'))
+        self.values.append(self.database.command_rpush('key', 'value4'))
+        self.values.append(self.database.command_llen('key'))
+        self.assertEqual(self.values, [0, None, 1, None, 2, None, 3, None, 4])

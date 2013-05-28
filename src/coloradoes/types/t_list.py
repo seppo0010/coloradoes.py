@@ -116,3 +116,12 @@ def command_linsert(db, key, position, pivot, value):
             _set_info(db, id, info['left'] - 1, info['right'])
             return info['right'] - info['left'] + 2
     return -1
+
+def command_llen(db, key):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return 0
+    if type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    info = _get_info(db, id)
+    return info['right'] - info['left'] + 1
