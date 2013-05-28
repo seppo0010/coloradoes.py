@@ -42,6 +42,21 @@ def command_lpush(db, key, value):
         db.storage.set(_key(db, id, left), value)
         _set_info(db, id, left, info['right'])
 
+def command_rpush(db, key, value):
+    id, type = db.get_key(key)[:2]
+    if type not in (None, TYPE):
+        raise ValueError(WRONG_TYPE)
+
+    info = _get_info(db, id)
+    if info is None:
+        id = db.set_key(key, 'L')
+        db.storage.set(_key(db, id, 0), value)
+        _set_info(db, id, 0, 0)
+    else:
+        right = info['right'] + 1
+        db.storage.set(_key(db, id, right), value)
+        _set_info(db, id, info['left'], right)
+
 def _get_pos(pos, info):
     if pos >= 0:
         return info['left'] + pos
