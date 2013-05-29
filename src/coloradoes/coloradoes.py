@@ -1,7 +1,7 @@
 import struct
 import time
 
-from .types import t_string, t_list
+from .types import t_string, t_list, t_set
 from .errors import *
 
 class Coloradoes(object):
@@ -77,7 +77,7 @@ class Coloradoes(object):
     def __getattr__(self, attrName):
         if attrName not in self.__dict__:
             if attrName.startswith('command_'):
-                for t in (t_string, t_list):
+                for t in (t_string, t_list, t_set):
                     if hasattr(t, attrName):
                         def func(*args, **kwargs):
                             return getattr(t, attrName)(self, *args, **kwargs)

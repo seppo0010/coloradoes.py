@@ -46,7 +46,7 @@ def _push(db, key, value, pos, create=True):
 
     info = _get_info(db, id)
     if info is None:
-        id = db.set_key(key, 'L')
+        id = db.set_key(key, TYPE)
         db.storage.set(_key(db, id, 0), value)
         _set_info(db, id, 0, 0)
         left, right = 0, 0
