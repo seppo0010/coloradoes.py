@@ -20,3 +20,9 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_sadd('key', '5', '3', '4'))
         self.values.append(self.database.command_scard('key'))
         self.assertEqual(self.values, [2, 3, 5])
+
+    def test_sismember(self):
+        self.values.append(self.database.command_sadd('key', '1', '2', '3'))
+        self.values.append(self.database.command_sismember('key', '1'))
+        self.values.append(self.database.command_sismember('key', '4'))
+        self.assertEqual(self.values, [3, True, False])

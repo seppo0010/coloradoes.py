@@ -90,3 +90,11 @@ def command_scard(db, key):
     elif type != TYPE:
         raise ValueError(WRONG_TYPE)
     return _get_info(db, id)['cardinality']
+
+def command_sismember(db, key, member):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return False
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    return _contains(db, id, member)
