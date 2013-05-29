@@ -82,3 +82,11 @@ def command_smembers(db, key):
     info = _get_info(db, id)
 
     return [_get(db, id, i) for i in range(0, info['cardinality'])]
+
+def command_scard(db, key):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return 0
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    return _get_info(db, id)['cardinality']

@@ -14,3 +14,9 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_sadd('key', '1', '2', '1'))
         self.values.append(self.database.command_smembers('key'))
         self.assertEqual(self.values, [2, ['1', '2']])
+
+    def test_scard(self):
+        self.values.append(self.database.command_sadd('key', '1', '2', '1'))
+        self.values.append(self.database.command_sadd('key', '5', '3', '4'))
+        self.values.append(self.database.command_scard('key'))
+        self.assertEqual(self.values, [2, 3, 5])
