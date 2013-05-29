@@ -38,3 +38,11 @@ class TestStorage(unittest.TestCase):
             members = self.database.command_srandmember('key', '2')
             self.assertEquals(len(members), 2)
             self.assertLessEqual(set(members), set(('1', '2', '3')))
+
+    def test_spop(self):
+        self.database.command_sadd('key', '1', '2', '3')
+        self.values.append(self.database.command_spop('key'))
+        self.values.append(self.database.command_spop('key'))
+        self.values.append(self.database.command_spop('key'))
+        self.assertEquals(self.database.command_spop('key'), [])
+        self.assertEquals(set(('1', '2', '3')), set(self.values))

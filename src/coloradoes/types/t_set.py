@@ -33,6 +33,7 @@ def _get_info(db, id):
 def _set_info(db, id, cardinality):
     if id is None:
         return None
+    assert cardinality > 0
     db.storage.set(_set_key(db, id), struct.pack(STRUCT_KEY_SET_VALUE,
                 cardinality))
 
@@ -115,3 +116,31 @@ def command_srandmember(db, key, _count=1):
     elif count >= cardinality:
         return [_get(db, id, i) for i in range(0, cardinality)]
     return [_get(db, id, i) for i in random.sample(xrange(cardinality), count)]
+
+def command_spop(db, key, _count=1):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return []
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    info = _get_info(db, id)
+    cardinality = info['cardinality']
+    if cardinality == 1:
+        pos = 0
+    else:
+        pos = random.randint(0, cardinality - 1)
+    value = _get(db, id, pos)
+    if pos < cardinality - 1: # not the last element
+        db.storage.rename(_set_key(db, id, cardinality - 1),
+                _set_key(db, id, pos))
+        db.storage.set(_set_element_key(db, id, value), pos)
+    else:
+        db.storage.delete(_set_element_key(db, id, value))
+        db.storage.delete(_set_key(db, id, pos))
+
+    if cardinality == 1:
+        db.delete_key(key, id=id, type=type)
+    else:
+        _set_info(db, id, cardinality - 1)
+    return value
