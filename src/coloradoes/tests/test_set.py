@@ -46,3 +46,9 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_spop('key'))
         self.assertEquals(self.database.command_spop('key'), [])
         self.assertEquals(set(('1', '2', '3')), set(self.values))
+
+    def test_srem(self):
+        self.database.command_sadd('key', '1', '2', '3')
+        self.values.append(self.database.command_srem('key', '3', '4'))
+        self.values.append(self.database.command_smembers('key'))
+        self.assertEqual(self.values, [1, ['1', '2']])

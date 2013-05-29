@@ -6,18 +6,18 @@ from ..errors import *
 
 TYPE = 'T'
 STRUCT_SET = '!ici'
-STRUCT_SET_ELEMENT_PREFIX = '!ici'
-STRUCT_SET_VALUE = '!icii'
+STRUCT_SET_ELEMENT_PREFIX = '!icic'
+STRUCT_SET_VALUE = '!icici'
 STRUCT_KEY_SET_VALUE = '!i'
 
 def _set_key(db, id, index=None):
     if index is None:
         return struct.pack(STRUCT_SET, db.database, TYPE, id)
-    return struct.pack(STRUCT_SET_VALUE, db.database, TYPE, id, index)
+    return struct.pack(STRUCT_SET_VALUE, db.database, TYPE, id, 'I', index)
 
 def _set_element_key(db, id, element):
-    return struct.pack(STRUCT_SET_ELEMENT_PREFIX, db.database, TYPE, id
-            ) + element
+    return struct.pack(STRUCT_SET_ELEMENT_PREFIX, db.database, TYPE, id,
+            'V') + element
 
 def _get_info(db, id):
     if id is None:
@@ -44,8 +44,14 @@ def _add(db, id, position, value):
 def _get(db, id, position):
     return db.storage.get(_set_key(db, id, position))
 
+def _position(db, id, value):
+    pos = db.storage.get(_set_element_key(db, id, value))
+    if pos is None:
+        return None
+    return int(pos)
+
 def _contains(db, id, value):
-    return db.storage.get(_set_element_key(db, id, value)) is not None
+    return _position(db, id, value) is not None
 
 def command_sadd(db, key, *args):
     id, type = db.get_key(key)[:2]
@@ -67,7 +73,7 @@ def command_sadd(db, key, *args):
     for member in members:
         if _contains(db, id, member):
             continue
-        db.storage.set(_set_key(db, id, cardinality), member)
+        _add(db, id, cardinality, member)
         cardinality += 1
         added += 1
 
@@ -144,3 +150,26 @@ def command_spop(db, key, _count=1):
     else:
         _set_info(db, id, cardinality - 1)
     return value
+
+def command_srem(db, key, *args):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return 0
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    info = _get_info(db, id)
+    cardinality = info['cardinality']
+
+    found = 0
+    for member in args:
+        element_key = _set_element_key(db, id, member)
+        pos = db.storage.get(element_key)
+        if pos is not None:
+            found += 1
+            db.storage.delete(element_key)
+            db.storage.rename(_set_key(db, id, cardinality - found),
+                    _set_key(db, id, int(pos)))
+    if found > 0:
+        _set_info(db, id, cardinality - found)
+    return found
