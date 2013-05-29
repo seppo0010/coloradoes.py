@@ -198,3 +198,18 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_lset('key', '2', 'f'))
         self.values.append(self.database.command_lrange('key', 0, -1))
         self.assertEqual(self.values, [None, None, None, ['d', 'e', 'f']])
+
+    def test_ltrim(self):
+        for v in ('a', 'b', 'c', 'd', 'e', 'f'):
+            self.database.command_rpush('key', v)
+        self.values.append(self.database.command_ltrim('key', 0, -1))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        self.values.append(self.database.command_ltrim('key', 1, -2))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        self.values.append(self.database.command_ltrim('key', -2, -1))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        self.assertEqual(self.values, [
+                None, ['a', 'b', 'c', 'd', 'e', 'f'],
+                None, ['b', 'c', 'd', 'e'],
+                None, ['d', 'e'],
+                ])

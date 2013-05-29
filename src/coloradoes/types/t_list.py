@@ -210,3 +210,23 @@ def command_lset(db, key, _index, value):
         raise ValueError(OUT_OF_RANGE.format('index'))
     pos = _get_pos(index, info)
     db.storage.set(_key(db, id, pos), value)
+
+def command_ltrim(db, key, _start, _end):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return
+    if type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    info = _get_info(db, id)
+
+    start, end = int(_start), int(_end)
+    # Ends in a position before the first one?
+    if end < 0 and info['right'] - info['left'] < - 1 - end:
+        db.delete_key(key, id=id, type=type)
+        return
+    left, right = _get_pos(start, info), _get_pos(end, info)
+    for i in range(info['left'], left):
+        db.storage.delete(_key(db, id, i))
+    for i in range(right + 1, info['right'] + 1):
+        db.storage.delete(_key(db, id, i))
+    _set_info(db, id, left, right)
