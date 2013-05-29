@@ -1,3 +1,4 @@
+import random
 import struct
 import time
 
@@ -98,3 +99,19 @@ def command_sismember(db, key, member):
     elif type != TYPE:
         raise ValueError(WRONG_TYPE)
     return _contains(db, id, member)
+
+def command_srandmember(db, key, _count=1):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return []
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    info = _get_info(db, id)
+    cardinality = info['cardinality']
+    count = int(_count)
+    if count == 1:
+        return _get(db, id, random.randint(0, cardinality - 1))
+    elif count >= cardinality:
+        return [_get(db, id, i) for i in range(0, cardinality)]
+    return [_get(db, id, i) for i in random.sample(xrange(cardinality), count)]

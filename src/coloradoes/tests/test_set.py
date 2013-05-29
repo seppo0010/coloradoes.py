@@ -26,3 +26,15 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_sismember('key', '1'))
         self.values.append(self.database.command_sismember('key', '4'))
         self.assertEqual(self.values, [3, True, False])
+
+    def test_srandmember(self):
+        self.values.append(self.database.command_sadd('key', '1', '2', '3'))
+        self.assertItemsEqual(self.database.command_srandmember('key', '3'),
+                ('1', '2', '3'))
+        for i in range(1, 100):
+            self.assertIn(self.database.command_srandmember('key'), ('1',
+                        '2', '3'))
+        for i in range(1, 100):
+            members = self.database.command_srandmember('key', '2')
+            self.assertEquals(len(members), 2)
+            self.assertLessEqual(set(members), set(('1', '2', '3')))
