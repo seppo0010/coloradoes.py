@@ -195,3 +195,18 @@ def command_lrem(db, key, _count, value):
     else:
         _set_info(db, id, info['left'] + deleted, info['right'])
     return deleted
+
+def command_lset(db, key, _index, value):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return None
+    if type != TYPE:
+        raise ValueError(WRONG_TYPE)
+    info = _get_info(db, id)
+
+    index = int(_index)
+    if (index < 0 and info['right'] - info['left'] < - 1 - index
+            ) or index > info['right'] - info['left']:
+        raise ValueError(OUT_OF_RANGE.format('index'))
+    pos = _get_pos(index, info)
+    db.storage.set(_key(db, id, pos), value)

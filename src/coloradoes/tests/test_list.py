@@ -187,3 +187,14 @@ class TestStorage(unittest.TestCase):
         values.remove('d')
         values.remove('d')
         self.assertEqual(self.values, [2, values])
+
+    def test_lset(self):
+        for v in ('a', 'b', 'c'):
+            self.database.command_rpush('key', v)
+        self.values.append(self.database.command_lset('key', '0', 'd'))
+        self.values.append(self.database.command_lset('key', '-2', 'e'))
+        with self.assertRaises(ValueError):
+            self.values.append(self.database.command_lset('key', '3', 'f'))
+        self.values.append(self.database.command_lset('key', '2', 'f'))
+        self.values.append(self.database.command_lrange('key', 0, -1))
+        self.assertEqual(self.values, [None, None, None, ['d', 'e', 'f']])
