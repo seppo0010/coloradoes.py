@@ -52,3 +52,11 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_srem('key', '3', '4'))
         self.values.append(self.database.command_smembers('key'))
         self.assertEqual(self.values, [1, ['1', '2']])
+
+    def test_smove(self):
+        self.database.command_sadd('key1', '1', '2', '3')
+        self.values.append(self.database.command_smove('key1', 'key2', '3'))
+        self.values.append(self.database.command_smove('key1', 'key2', '4'))
+        self.values.append(self.database.command_smembers('key1'))
+        self.values.append(self.database.command_smembers('key2'))
+        self.assertEqual(self.values, [1, 0, ['1', '2'], ['3']])
