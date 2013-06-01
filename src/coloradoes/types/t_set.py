@@ -55,7 +55,6 @@ def _contains(db, id, value):
 
 def command_sadd(db, key, *args, **kwargs):
     id = kwargs.pop('id', None)
-    type = kwargs.pop('type', None)
     if id is None:
         id, type = db.get_key(key)[:2]
         if type not in (None, TYPE):
@@ -84,7 +83,7 @@ def command_sadd(db, key, *args, **kwargs):
         _set_info(db, id, cardinality)
     return added
 
-def command_smembers(db, key, id=None, type=None):
+def command_smembers(db, key, id=None):
     if id is None:
         id, type = db.get_key(key)[:2]
         if type is None:
@@ -150,7 +149,7 @@ def command_spop(db, key, _count=1):
         db.storage.delete(_set_key(db, id, pos))
 
     if cardinality == 1:
-        db.delete_key(key, id=id, type=type)
+        db.delete_key(key, id=id, type=TYPE)
     else:
         _set_info(db, id, cardinality - 1)
     return value
@@ -195,15 +194,18 @@ def command_smove(db, source, target, member):
     if target_type not in (TYPE, None):
         raise ValueError(WRONG_TYPE)
 
-    command_srem(db, source, member, id=source_id, type=source_type)
-    command_sadd(db, target, member, id=target_id, type=target_type)
+    command_srem(db, source, member, id=source_id)
+    command_sadd(db, target, member, id=target_id)
     return 1
 
-def _fetch_keys_data(db, *keys):
+def _fetch_keys_data(db, *args, **kwargs):
+    include_empty = kwargs.get('include_empty', False)
     keys = []
     for key in args:
         id, type = db.get_key(key)[:2]
         if type is None:
+            if include_empty:
+                keys.append(key, None, None, 0)
             continue
         if type != TYPE:
             raise ValueError(WRONG_TYPE)
@@ -223,36 +225,47 @@ def command_sunionstore(db, destination, *args):
     destination_id, destination_type = db.get_key(destination)[:2]
     for (key, id, type, cardinality) in keys:
         for i in range(0, cardinality):
-            command_sadd(db, destination, _get(db, id, i), id=destination_id,
-                    type=destination_type)
+            command_sadd(db, destination, _get(db, id, i), id=destination_id)
             # was it created by this SADD call?
             if destination_id is None:
                 destination_id, destination_type = db.get_key(destination)[:2]
 
-def command_sinter(db, *args):
-    keys = _fetch_keys_data(db, *args)
+def _is_inter(db, value, keys):
+    for (key, _id, type, _) in keys:
+        if not _contains(db, _id, value):
+            return False
+    return True
+
+def _sinter(db, *args, **kwargs):
+    destination = kwargs.get('destination', None)
+    keys = _fetch_keys_data(db, *args, include_empty=True)
+
+    if destination is None:
+        retval = []
+    else:
+        retval = 0
+        destination_id, destination_type = db.get_key(destination)[:2]
 
     if len(keys) == 0:
-        return []
-
-    if len(keys) == 1:
-        key, id, type, cardinality = keys[0]
-        return [_get(db, id, i) for i in range(0, cardinality)]
+        return retval
 
     # Sort sets from the smallest to largest, this will improve our
     # algorithm's performance
     keys = sorted(keys, cmp=lambda x,y: cmp(x[3], y[3]))
     (_, id, _, cardinality) = keys.pop(0)
 
-    retval = []
     for i in range(0, cardinality):
         value = _get(db, id, i)
-        should_add = True
-        for (key, _id, type, _) in keys:
-            if not _contains(db, _id, value):
-                should_add = False
-                break
-        if should_add:
-            retval.append(value)
-
+        if _is_inter(db, value, keys):
+            if destination is None:
+                retval.append(value)
+            else:
+                retval += command_sadd(db, destination, value,
+                        id=destination_id)
     return retval
+
+def command_sinter(db, *args):
+    return _sinter(db, *args)
+
+def command_sinterstore(db, destination, *args):
+    return _sinter(db, *args, destination=destination)
