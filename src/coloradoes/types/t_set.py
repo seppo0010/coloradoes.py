@@ -197,3 +197,9 @@ def command_smove(db, source, target, member):
     command_srem(db, source, member, id=source_id, type=source_type)
     command_sadd(db, target, member, id=target_id, type=target_type)
     return 1
+
+def command_sunion(db, *args):
+    retval = set()
+    for key in args:
+        retval.update(command_smembers(db, key))
+    return list(retval)

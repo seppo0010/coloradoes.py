@@ -60,3 +60,10 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_smembers('key1'))
         self.values.append(self.database.command_smembers('key2'))
         self.assertEqual(self.values, [1, 0, ['1', '2'], ['3']])
+
+    def test_sunion(self):
+        self.database.command_sadd('key1', '1', '2', '3')
+        self.database.command_sadd('key2', '3', '4', '5')
+        union = self.database.command_sunion('key1', 'key2')
+        self.assertEqual(len(union), 5)
+        self.assertEqual(set(union), set(('1', '2', '3', '4', '5')))
