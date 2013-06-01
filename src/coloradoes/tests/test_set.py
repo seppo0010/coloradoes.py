@@ -67,3 +67,11 @@ class TestStorage(unittest.TestCase):
         union = self.database.command_sunion('key1', 'key2')
         self.assertEqual(len(union), 5)
         self.assertEqual(set(union), set(('1', '2', '3', '4', '5')))
+
+    def test_sunionstore(self):
+        self.database.command_sadd('key1', '1', '2', '3')
+        self.database.command_sadd('key2', '3', '4', '5')
+        self.database.command_sunionstore('key3', 'key1', 'key2')
+        union = self.database.command_smembers('key3')
+        self.assertEqual(len(union), 5)
+        self.assertEqual(set(union), set(('1', '2', '3', '4', '5')))

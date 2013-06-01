@@ -203,3 +203,23 @@ def command_sunion(db, *args):
     for key in args:
         retval.update(command_smembers(db, key))
     return list(retval)
+
+def command_sunionstore(db, destination, *args):
+    keys = []
+    for key in args:
+        id, type = db.get_key(key)[:2]
+        if type is None:
+            continue
+        if type != TYPE:
+            raise ValueError(WRONG_TYPE)
+        info = _get_info(db, id)
+        keys.append((key, id, type, info['cardinality']))
+
+    destination_id, destination_type = db.get_key(destination)[:2]
+    for (key, id, type, cardinality) in keys:
+        for i in range(0, cardinality):
+            command_sadd(db, destination, _get(db, id, i), id=destination_id,
+                    type=destination_type)
+            # was it created by this SADD call?
+            if destination_id is None:
+                destination_id, destination_type = db.get_key(destination)[:2]
