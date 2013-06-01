@@ -75,3 +75,14 @@ class TestStorage(unittest.TestCase):
         union = self.database.command_smembers('key3')
         self.assertEqual(len(union), 5)
         self.assertEqual(set(union), set(('1', '2', '3', '4', '5')))
+
+    def test_sinter(self):
+        self.database.command_sadd('key1', '1', '2', '3')
+        self.database.command_sadd('key2', '3', '4', '5')
+        inter = self.database.command_sinter('key1', 'key2')
+        self.assertEqual(len(inter), 1)
+        self.assertEqual(set(inter), set(('3')))
+        self.database.command_sadd('key1', '4')
+        inter = self.database.command_sinter('key1', 'key2')
+        self.assertEqual(len(inter), 2)
+        self.assertEqual(set(inter), set(('3', '4')))

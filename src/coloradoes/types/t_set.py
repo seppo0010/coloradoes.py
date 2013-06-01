@@ -84,12 +84,13 @@ def command_sadd(db, key, *args, **kwargs):
         _set_info(db, id, cardinality)
     return added
 
-def command_smembers(db, key):
-    id, type = db.get_key(key)[:2]
-    if type is None:
-        return []
-    elif type != TYPE:
-        raise ValueError(WRONG_TYPE)
+def command_smembers(db, key, id=None, type=None):
+    if id is None:
+        id, type = db.get_key(key)[:2]
+        if type is None:
+            return []
+        elif type != TYPE:
+            raise ValueError(WRONG_TYPE)
     info = _get_info(db, id)
 
     return [_get(db, id, i) for i in range(0, info['cardinality'])]
@@ -223,3 +224,39 @@ def command_sunionstore(db, destination, *args):
             # was it created by this SADD call?
             if destination_id is None:
                 destination_id, destination_type = db.get_key(destination)[:2]
+
+def command_sinter(db, *args):
+    keys = []
+    for key in args:
+        id, type = db.get_key(key)[:2]
+        if type is None:
+            return 0
+        if type != TYPE:
+            raise ValueError(WRONG_TYPE)
+        info = _get_info(db, id)
+        keys.append((key, id, type, info['cardinality']))
+
+    if len(keys) == 0:
+        return []
+
+    if len(keys) == 1:
+        key, id, type, cardinality = keys[0]
+        return [_get(db, id, i) for i in range(0, cardinality)]
+
+    # Sort sets from the smallest to largest, this will improve our
+    # algorithm's performance
+    keys = sorted(keys, cmp=lambda x,y: cmp(x[3], y[3]))
+    (_, id, _, cardinality) = keys.pop(0)
+
+    retval = []
+    for i in range(0, cardinality):
+        value = _get(db, id, i)
+        should_add = True
+        for (key, _id, type, _) in keys:
+            if not _contains(db, _id, value):
+                should_add = False
+                break
+        if should_add:
+            retval.append(value)
+
+    return retval
