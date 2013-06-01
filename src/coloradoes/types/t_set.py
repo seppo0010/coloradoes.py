@@ -199,13 +199,7 @@ def command_smove(db, source, target, member):
     command_sadd(db, target, member, id=target_id, type=target_type)
     return 1
 
-def command_sunion(db, *args):
-    retval = set()
-    for key in args:
-        retval.update(command_smembers(db, key))
-    return list(retval)
-
-def command_sunionstore(db, destination, *args):
+def _fetch_keys_data(db, *keys):
     keys = []
     for key in args:
         id, type = db.get_key(key)[:2]
@@ -215,6 +209,16 @@ def command_sunionstore(db, destination, *args):
             raise ValueError(WRONG_TYPE)
         info = _get_info(db, id)
         keys.append((key, id, type, info['cardinality']))
+    return keys
+
+def command_sunion(db, *args):
+    retval = set()
+    for key in args:
+        retval.update(command_smembers(db, key))
+    return list(retval)
+
+def command_sunionstore(db, destination, *args):
+    keys = _fetch_keys_data(db, *args)
 
     destination_id, destination_type = db.get_key(destination)[:2]
     for (key, id, type, cardinality) in keys:
@@ -226,15 +230,7 @@ def command_sunionstore(db, destination, *args):
                 destination_id, destination_type = db.get_key(destination)[:2]
 
 def command_sinter(db, *args):
-    keys = []
-    for key in args:
-        id, type = db.get_key(key)[:2]
-        if type is None:
-            return 0
-        if type != TYPE:
-            raise ValueError(WRONG_TYPE)
-        info = _get_info(db, id)
-        keys.append((key, id, type, info['cardinality']))
+    keys = _fetch_keys_data(db, *args)
 
     if len(keys) == 0:
         return []
