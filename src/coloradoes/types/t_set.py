@@ -270,17 +270,24 @@ def command_sinter(db, *args):
 def command_sinterstore(db, destination, *args):
     return _sinter(db, *args, destination=destination)
 
-def command_sdiff(db, key, *args):
+def _sdiff(db, key, *args, **kwargs):
+    destination = kwargs.get('destination', None)
+    if destination is None:
+        retval = []
+    else:
+        destination_id = db.get_key(destination)[0]
+        retval = 0
+
     id, type = db.get_key(key)[:2]
     if type is None:
-        return []
+        return retval
     elif type != TYPE:
         raise ValueError(WRONG_TYPE)
+
     info = _get_info(db, id)
     cardinality = info['cardinality']
 
     keys = _fetch_keys_data(db, *args, include_empty=False)
-    retval = []
     for i in range(0, cardinality):
         value = _get(db, id, i)
         contained = False
@@ -289,5 +296,17 @@ def command_sdiff(db, key, *args):
                 contained = True
                 break
         if not contained:
-            retval.append(value)
+            if destination is None:
+                retval.append(value)
+            else:
+                retval += command_sadd(db, destination, value,
+                        id=destination_id)
+                if destination_id is None:
+                    destination_id = db.get_key(destination)[0]
     return retval
+
+def command_sdiff(db, key, *args):
+    return _sdiff(db, key, *args)
+
+def command_sdiffstore(db, destination, key, *args):
+    return _sdiff(db, key, *args, destination=destination)
