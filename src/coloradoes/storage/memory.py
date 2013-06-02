@@ -3,14 +3,6 @@ class Storage(object):
         super(Storage, self).__init__()
         self.keys = {}
 
-    def increment_by(self, key, increment):
-        if key in self.keys:
-            value = int(self.keys[key]) + increment
-        else:
-            value = increment
-        self.keys[key] = str(value)
-        return value
-
     def set(self, key, value):
         self.keys[key] = str(value)
 
@@ -25,7 +17,3 @@ class Storage(object):
             return False
         del self.keys[key]
         return True
-
-    def rename(self, source, target):
-        self.keys[target] = self.keys[source]
-        del self.keys[source]

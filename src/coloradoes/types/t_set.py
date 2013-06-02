@@ -141,8 +141,7 @@ def command_spop(db, key, _count=1):
         pos = random.randint(0, cardinality - 1)
     value = _get(db, id, pos)
     if pos < cardinality - 1: # not the last element
-        db.storage.rename(_set_key(db, id, cardinality - 1),
-                _set_key(db, id, pos))
+        db.rename(_set_key(db, id, cardinality - 1), _set_key(db, id, pos))
         db.storage.set(_set_element_key(db, id, value), pos)
     else:
         db.storage.delete(_set_element_key(db, id, value))
@@ -174,7 +173,7 @@ def command_srem(db, key, *args, **kwargs):
         if pos is not None:
             found += 1
             db.storage.delete(element_key)
-            db.storage.rename(_set_key(db, id, cardinality - found),
+            db.rename(_set_key(db, id, cardinality - found),
                     _set_key(db, id, int(pos)))
     if found > 0:
         _set_info(db, id, cardinality - found)

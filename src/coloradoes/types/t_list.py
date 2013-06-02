@@ -141,7 +141,7 @@ def command_linsert(db, key, position, pivot, value):
     for i in range(info['left'], info['right'] + 1):
         if db.storage.get(_key(db, id, i)) == pivot:
             for j in range(info['left'], i + pos):
-                db.storage.rename(_key(db, id, j), _key(db, id, j - 1))
+                db.rename(_key(db, id, j), _key(db, id, j - 1))
             db.storage.set(_key(db, id, i + pos - 1), value)
             _set_info(db, id, info['left'] - 1, info['right'])
             return info['right'] - info['left'] + 2
@@ -189,7 +189,7 @@ def command_lrem(db, key, _count, value):
         if db.storage.get(key) == value and (target > deleted or target == 0):
             deleted += 1
         elif deleted > 0:
-            db.storage.rename(key, _key(db, id, pos - sign * deleted))
+            db.rename(key, _key(db, id, pos - sign * deleted))
     if sign == 1:
         _set_info(db, id, info['left'], info['right'] - deleted)
     else:

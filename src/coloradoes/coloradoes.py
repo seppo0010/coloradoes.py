@@ -19,9 +19,20 @@ class Coloradoes(object):
     def set_database(self, database):
         self.database = database
 
+    def rename(self, source, target):
+        value = self.storage.get(source)
+        if value:
+            self.storage.set(target, value)
+            self.storage.delete(source)
+
+    def increment_by(self, key, increment):
+        id = int(self.storage.get(key) or 0) + increment
+        self.storage.set(key, str(id))
+        return id
+
     def get_id(self):
-        return self.storage.increment_by(struct.pack(self.STRUCT_ID,
-                    self.database) + 'id', 1)
+        return self.increment_by(struct.pack(self.STRUCT_ID, self.database)
+                + 'id', 1)
 
     def set_key(self, key, type, expire=None):
         self.command_del(key)

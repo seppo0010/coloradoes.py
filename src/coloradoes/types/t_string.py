@@ -96,8 +96,7 @@ def command_incrby(db, key, increment):
         return str(increment)
     if type != 'S':
         raise ValueError(WRONG_TYPE)
-    return str(db.storage.increment_by(_str_key(db, id),
-                int(increment)))
+    return str(db.increment_by(_str_key(db, id), int(increment)))
 
 def command_incr(db, key):
     return command_incrby(db, key, 1)
@@ -115,8 +114,7 @@ def command_incrbyfloat(db, key, increment):
         return str(increment)
     if type != 'S':
         raise ValueError(WRONG_TYPE)
-    return str(db.storage.increment_by(_str_key(db, id),
-                float(increment)))
+    return str(db.increment_by(_str_key(db, id), float(increment)))
 
 def command_strlen(db, key):
     return len(command_get(db, key) or '')
