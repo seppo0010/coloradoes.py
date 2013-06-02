@@ -98,3 +98,10 @@ class TestStorage(unittest.TestCase):
         self.assertEqual(inter, 1)
         self.assertEqual(set(self.database.command_smembers('key3')),
                 set(('3', '4')))
+
+    def test_sdiff(self):
+        self.database.command_sadd('key1', '1', '2', '3')
+        self.database.command_sadd('key2', '3', '4', '5')
+        diff = self.database.command_sdiff('key1', 'key2')
+        self.assertEqual(len(diff), 2)
+        self.assertEqual(set(diff), set(('1', '2')))
