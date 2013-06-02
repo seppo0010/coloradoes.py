@@ -30,6 +30,18 @@ class Coloradoes(object):
         self.storage.set(key, str(id))
         return id
 
+    def get(self, key):
+        return self.storage.get(key)
+
+    def set(self, key, value):
+        return self.storage.set(key, value)
+
+    def exists(self, key):
+        return self.storage.exists(key)
+
+    def delete(self, key):
+        return self.storage.delete(key)
+
     def get_id(self):
         return self.increment_by(struct.pack(self.STRUCT_ID, self.database)
                 + 'id', 1)

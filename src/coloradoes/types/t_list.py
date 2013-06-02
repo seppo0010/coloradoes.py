@@ -13,12 +13,12 @@ def _key(db, id, index=None):
     return struct.pack(STRUCT_LIST, db.database, TYPE, id, index)
 
 def _set_info(db, id, left, right):
-    db.storage.set(_key(db, id), struct.pack('!ii', left, right))
+    db.set(_key(db, id), struct.pack('!ii', left, right))
 
 def _get_info(db, id):
     if id is None:
         return None
-    data = db.storage.get(_key(db, id))
+    data = db.get(_key(db, id))
     if not data:
         return None
     left, right = struct.unpack(STRUCT_KEY_LIST_VALUE, data)
@@ -47,18 +47,18 @@ def _push(db, key, value, pos, create=True):
     info = _get_info(db, id)
     if info is None:
         id = db.set_key(key, TYPE)
-        db.storage.set(_key(db, id, 0), value)
+        db.set(_key(db, id, 0), value)
         _set_info(db, id, 0, 0)
         left, right = 0, 0
     else:
         if pos == -1:
             left = info['left'] - 1
             right = info['right']
-            db.storage.set(_key(db, id, left), value)
+            db.set(_key(db, id, left), value)
         else:
             left = info['left']
             right = info['right'] + 1
-            db.storage.set(_key(db, id, right), value)
+            db.set(_key(db, id, right), value)
         _set_info(db, id, left, right)
     return right - left + 1
 
@@ -77,8 +77,8 @@ def _pop(db, key_name, pos):
         index = right
         right -= 1
     key = _key(db, id, index)
-    value = db.storage.get(key)
-    db.storage.delete(key)
+    value = db.get(key)
+    db.delete(key)
     if right < left:
         db.delete_key(key_name, id=id, type=type)
     else:
@@ -110,8 +110,7 @@ def command_lrange(db, key, _start, _end):
     if end < 0 and info['right'] - info['left'] < - 1 - end: return []
     left, right = _get_pos(start, info), _get_pos(end, info)
 
-    return [db.storage.get(_key(db, id, i)) for i in
-            range(left, right + 1)]
+    return [db.get(_key(db, id, i)) for i in range(left, right + 1)]
 
 def command_lindex(db, key, _index):
     id, type = db.get_key(key)[:2]
@@ -124,7 +123,7 @@ def command_lindex(db, key, _index):
     index = int(_index)
     if index < 0 and info['right'] - info['left'] < - 1 - index: return None
     pos = _get_pos(index, info)
-    return db.storage.get(_key(db, id, pos))
+    return db.get(_key(db, id, pos))
 
 def command_linsert(db, key, position, pivot, value):
     id, type = db.get_key(key)[:2]
@@ -139,10 +138,10 @@ def command_linsert(db, key, position, pivot, value):
     info = _get_info(db, id)
 
     for i in range(info['left'], info['right'] + 1):
-        if db.storage.get(_key(db, id, i)) == pivot:
+        if db.get(_key(db, id, i)) == pivot:
             for j in range(info['left'], i + pos):
                 db.rename(_key(db, id, j), _key(db, id, j - 1))
-            db.storage.set(_key(db, id, i + pos - 1), value)
+            db.set(_key(db, id, i + pos - 1), value)
             _set_info(db, id, info['left'] - 1, info['right'])
             return info['right'] - info['left'] + 2
     return -1
@@ -186,7 +185,7 @@ def command_lrem(db, key, _count, value):
 
     for pos in lookup:
         key = _key(db, id, pos)
-        if db.storage.get(key) == value and (target > deleted or target == 0):
+        if db.get(key) == value and (target > deleted or target == 0):
             deleted += 1
         elif deleted > 0:
             db.rename(key, _key(db, id, pos - sign * deleted))
@@ -209,7 +208,7 @@ def command_lset(db, key, _index, value):
             ) or index > info['right'] - info['left']:
         raise ValueError(OUT_OF_RANGE.format('index'))
     pos = _get_pos(index, info)
-    db.storage.set(_key(db, id, pos), value)
+    db.set(_key(db, id, pos), value)
 
 def command_ltrim(db, key, _start, _end):
     id, type = db.get_key(key)[:2]
@@ -226,7 +225,7 @@ def command_ltrim(db, key, _start, _end):
         return
     left, right = _get_pos(start, info), _get_pos(end, info)
     for i in range(info['left'], left):
-        db.storage.delete(_key(db, id, i))
+        db.delete(_key(db, id, i))
     for i in range(right + 1, info['right'] + 1):
-        db.storage.delete(_key(db, id, i))
+        db.delete(_key(db, id, i))
     _set_info(db, id, left, right)

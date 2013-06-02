@@ -28,7 +28,7 @@ def command_set(db, key, value, expire=None, replace=True):
             return False
         db.delete_key(key, id=old_id, type=old_type)
     id = db.set_key(key, 'S', expire=expire)
-    db.storage.set(_str_key(db, id), value)
+    db.set(_str_key(db, id), value)
     return True
 
 def command_get(db, key):
@@ -37,7 +37,7 @@ def command_get(db, key):
         return None
     if type != 'S':
         raise ValueError(WRONG_TYPE)
-    return db.storage.get(_str_key(db, id))
+    return db.get(_str_key(db, id))
 
 def command_del(db, *args):
     deleted = 0
@@ -55,9 +55,9 @@ def command_append(db, key, value):
     if type != 'S':
         raise ValueError(WRONG_TYPE)
     str_key = _str_key(db, id)
-    old_value = db.storage.get(db, str_key)
+    old_value = db.get(db, str_key)
     new_value = old_value + value
-    db.storage.set(str_key, new_value)
+    db.set(str_key, new_value)
     return len(new_value)
 
 def command_getrange(db, key, start=0, end=-1):
@@ -70,7 +70,7 @@ def command_getrange(db, key, start=0, end=-1):
         end = None
     else:
         end += 1
-    return db.storage.get(_str_key(db, id))[start:end]
+    return db.get(_str_key(db, id))[start:end]
 
 def command_setrange(db, key, start, value):
     id, type = db.get_key(key)[:2]
@@ -79,9 +79,9 @@ def command_setrange(db, key, start, value):
     if type != 'S':
         raise ValueError(WRONG_TYPE)
     str_key = _str_key(db, id)
-    old_value = db.storage.get(str_key)
+    old_value = db.get(str_key)
     new_value = old_value[:start] + value + old_value[start + len(value):]
-    db.storage.set(str_key, new_value)
+    db.set(str_key, new_value)
     return len(new_value)
 
 def command_getset(db, key, value):

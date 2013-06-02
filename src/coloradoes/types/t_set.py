@@ -22,7 +22,7 @@ def _set_element_key(db, id, element):
 def _get_info(db, id):
     if id is None:
         return None
-    data = db.storage.get(_set_key(db, id))
+    data = db.get(_set_key(db, id))
     if not data:
         return None
     cardinality, = struct.unpack(STRUCT_KEY_SET_VALUE, data)
@@ -34,18 +34,17 @@ def _set_info(db, id, cardinality):
     if id is None:
         return None
     assert cardinality > 0
-    db.storage.set(_set_key(db, id), struct.pack(STRUCT_KEY_SET_VALUE,
-                cardinality))
+    db.set(_set_key(db, id), struct.pack(STRUCT_KEY_SET_VALUE, cardinality))
 
 def _add(db, id, position, value):
-    db.storage.set(_set_key(db, id, position), value)
-    db.storage.set(_set_element_key(db, id, value), position)
+    db.set(_set_key(db, id, position), value)
+    db.set(_set_element_key(db, id, value), position)
 
 def _get(db, id, position):
-    return db.storage.get(_set_key(db, id, position))
+    return db.get(_set_key(db, id, position))
 
 def _position(db, id, value):
-    pos = db.storage.get(_set_element_key(db, id, value))
+    pos = db.get(_set_element_key(db, id, value))
     if pos is None:
         return None
     return int(pos)
@@ -142,10 +141,10 @@ def command_spop(db, key, _count=1):
     value = _get(db, id, pos)
     if pos < cardinality - 1: # not the last element
         db.rename(_set_key(db, id, cardinality - 1), _set_key(db, id, pos))
-        db.storage.set(_set_element_key(db, id, value), pos)
+        db.set(_set_element_key(db, id, value), pos)
     else:
-        db.storage.delete(_set_element_key(db, id, value))
-        db.storage.delete(_set_key(db, id, pos))
+        db.delete(_set_element_key(db, id, value))
+        db.delete(_set_key(db, id, pos))
 
     if cardinality == 1:
         db.delete_key(key, id=id, type=TYPE)
@@ -169,10 +168,10 @@ def command_srem(db, key, *args, **kwargs):
     found = 0
     for member in args:
         element_key = _set_element_key(db, id, member)
-        pos = db.storage.get(element_key)
+        pos = db.get(element_key)
         if pos is not None:
             found += 1
-            db.storage.delete(element_key)
+            db.delete(element_key)
             db.rename(_set_key(db, id, cardinality - found),
                     _set_key(db, id, int(pos)))
     if found > 0:
