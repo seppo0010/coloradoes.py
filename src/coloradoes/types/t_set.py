@@ -220,15 +220,16 @@ def command_sunion(db, *args):
     return list(retval)
 
 def command_sunionstore(db, destination, *args):
+    db.command_del(destination)
     keys = _fetch_keys_data(db, *args)
 
-    destination_id, destination_type = db.get_key(destination)[:2]
+    destination_id = None
     for (key, id, type, cardinality) in keys:
         for i in range(0, cardinality):
             command_sadd(db, destination, _get(db, id, i), id=destination_id)
             # was it created by this SADD call?
             if destination_id is None:
-                destination_id, destination_type = db.get_key(destination)[:2]
+                destination_id  = db.get_key(destination)[0]
 
 def _is_inter(db, value, keys):
     for (key, _id, type, _) in keys:
@@ -244,7 +245,6 @@ def _sinter(db, *args, **kwargs):
         retval = []
     else:
         retval = 0
-        destination_id, destination_type = db.get_key(destination)[:2]
 
     if len(keys) == 0:
         return retval
@@ -253,6 +253,7 @@ def _sinter(db, *args, **kwargs):
     # algorithm's performance
     keys = sorted(keys, cmp=lambda x,y: cmp(x[3], y[3]))
     (_, id, _, cardinality) = keys.pop(0)
+    destination_id = None
 
     for i in range(0, cardinality):
         value = _get(db, id, i)
@@ -262,12 +263,15 @@ def _sinter(db, *args, **kwargs):
             else:
                 retval += command_sadd(db, destination, value,
                         id=destination_id)
+                if destination_id is None:
+                    destination_id  = db.get_key(destination)[0]
     return retval
 
 def command_sinter(db, *args):
     return _sinter(db, *args)
 
 def command_sinterstore(db, destination, *args):
+    db.command_del(destination)
     return _sinter(db, *args, destination=destination)
 
 def _sdiff(db, key, *args, **kwargs):
@@ -275,7 +279,6 @@ def _sdiff(db, key, *args, **kwargs):
     if destination is None:
         retval = []
     else:
-        destination_id = db.get_key(destination)[0]
         retval = 0
 
     id, type = db.get_key(key)[:2]
@@ -288,6 +291,7 @@ def _sdiff(db, key, *args, **kwargs):
     cardinality = info['cardinality']
 
     keys = _fetch_keys_data(db, *args, include_empty=False)
+    destination_id = None
     for i in range(0, cardinality):
         value = _get(db, id, i)
         contained = False
@@ -309,4 +313,5 @@ def command_sdiff(db, key, *args):
     return _sdiff(db, key, *args)
 
 def command_sdiffstore(db, destination, key, *args):
+    db.command_del(destination)
     return _sdiff(db, key, *args, destination=destination)

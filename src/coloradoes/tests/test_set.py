@@ -95,7 +95,7 @@ class TestStorage(unittest.TestCase):
         self.assertEqual(self.database.command_smembers('key3'), ['3'])
         self.database.command_sadd('key1', '4')
         inter = self.database.command_sinterstore('key3', 'key1', 'key2')
-        self.assertEqual(inter, 1)
+        self.assertEqual(inter, 2)
         self.assertEqual(set(self.database.command_smembers('key3')),
                 set(('3', '4')))
 
