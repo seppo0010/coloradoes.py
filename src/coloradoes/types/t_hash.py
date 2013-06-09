@@ -48,7 +48,7 @@ def _position(db, id, field):
     pos = db.get(_hash_field_key(db, id, field))
     if pos is None:
         return None
-    return int(pos)
+    return struct.unpack(STRUCT_KEY_HASH_VALUE, pos[:4])[0]
 
 def _contains(db, id, field):
     return _position(db, id, field) is not None
@@ -67,7 +67,7 @@ def command_hset(db, key, field, value, id=None):
 
     if position is None:
         position = _get_info(db, id)['cardinality']
-        _set_info(db, id, position + 1)
+    _set_info(db, id, position + 1)
     _add(db, id, position, field, value)
     return True
 
@@ -83,3 +83,31 @@ def command_hget(db, key, field, id=None):
     if data is None:
         return None
     return data[4:]
+
+def command_hdel(db, key, *args, **kwargs):
+    id = kwargs.get('id', None)
+    if id is None:
+        id, type = db.get_key(key)[:2]
+        if type is None:
+            return 0
+        elif type != TYPE:
+            raise ValueError(WRONG_TYPE)
+
+    cardinality = _get_info(db, id)['cardinality']
+    del_count = 0
+    for field in args:
+        position = _position(db, id, field)
+        if position is not None:
+            last_position = cardinality - del_count - 1
+            if position == last_position:
+                # is the last element
+                last_field = field
+                db.delete(_hash_field_key(db, id, last_field))
+            else:
+                # copy the last element to replace the one to delete
+                last_field = db.get(_hash_index_key(db, id, last_position))
+                last_value = db.get(_hash_field_key(db, id, last_field))[4:]
+                _add(db, id, position, last_field, last_value)
+            db.delete(_hash_index_key(db, id, last_position))
+            del_count += 1
+    return del_count
