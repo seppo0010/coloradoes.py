@@ -1,6 +1,5 @@
 import random
 import struct
-import time
 
 from ..errors import *
 
@@ -227,7 +226,7 @@ def command_sunionstore(db, destination, *args):
             command_sadd(db, destination, _get(db, id, i), id=destination_id)
             # was it created by this SADD call?
             if destination_id is None:
-                destination_id  = db.get_key(destination)[0]
+                destination_id = db.get_key(destination)[0]
 
 def _is_inter(db, value, keys):
     for (key, _id, type, _) in keys:
@@ -249,7 +248,7 @@ def _sinter(db, *args, **kwargs):
 
     # Sort sets from the smallest to largest, this will improve our
     # algorithm's performance
-    keys = sorted(keys, cmp=lambda x,y: cmp(x[3], y[3]))
+    keys = sorted(keys, cmp=lambda x, y: cmp(x[3], y[3]))
     (_, id, _, cardinality) = keys.pop(0)
     destination_id = None
 
@@ -262,7 +261,7 @@ def _sinter(db, *args, **kwargs):
                 retval += command_sadd(db, destination, value,
                         id=destination_id)
                 if destination_id is None:
-                    destination_id  = db.get_key(destination)[0]
+                    destination_id = db.get_key(destination)[0]
     return retval
 
 def command_sinter(db, *args):

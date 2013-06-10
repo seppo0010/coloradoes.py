@@ -1,4 +1,3 @@
-import time
 import unittest
 
 from .. import Coloradoes
@@ -90,7 +89,7 @@ class TestStorage(unittest.TestCase):
         self.values.append(self.database.command_incrby('key', '10'))
         self.assertEqual(self.values, ['5', '15'])
 
-    def test_decrement(self):
+    def test_decrementby(self):
         self.values.append(self.database.command_decrby('key', '5'))
         self.values.append(self.database.command_decrby('key', '10'))
         self.assertEqual(self.values, ['-5', '-15'])

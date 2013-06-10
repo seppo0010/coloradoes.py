@@ -4,6 +4,7 @@ import time
 from .types import t_string, t_list, t_set, t_hash
 from .errors import *
 
+
 class Coloradoes(object):
     STRUCT_KEY = '!ic'
     STRUCT_KEY_VALUE = '!icd'

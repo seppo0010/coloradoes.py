@@ -1,4 +1,3 @@
-import time
 import unittest
 
 from .. import Coloradoes

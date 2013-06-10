@@ -1,6 +1,4 @@
-import random
 import struct
-import time
 
 from ..errors import *
 
@@ -203,7 +201,6 @@ def command_hmget(db, key, *args):
     elif type != TYPE:
         raise ValueError(WRONG_TYPE)
 
-    cardinality = _get_info(db, id)['cardinality']
     retval = []
     for field in args:
         data = db.get(_hash_field_key(db, id, field))

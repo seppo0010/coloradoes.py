@@ -107,7 +107,8 @@ def command_lrange(db, key, _start, _end):
 
     start, end = int(_start), int(_end)
     # Ends in a position before the first one?
-    if end < 0 and info['right'] - info['left'] < - 1 - end: return []
+    if end < 0 and info['right'] - info['left'] < - 1 - end:
+        return []
     left, right = _get_pos(start, info), _get_pos(end, info)
 
     return [db.get(_key(db, id, i)) for i in range(left, right + 1)]
@@ -121,7 +122,8 @@ def command_lindex(db, key, _index):
     info = _get_info(db, id)
 
     index = int(_index)
-    if index < 0 and info['right'] - info['left'] < - 1 - index: return None
+    if index < 0 and info['right'] - info['left'] < - 1 - index:
+        return None
     pos = _get_pos(index, info)
     return db.get(_key(db, id, pos))
 
@@ -181,7 +183,7 @@ def command_lrem(db, key, _count, value):
     else:
         lookup = range(info['right'], info['left'] - 1, -1)
     sign = 1 if count >= 0 else -1
-    target =  sign * count
+    target = sign * count
 
     for pos in lookup:
         key = _key(db, id, pos)
