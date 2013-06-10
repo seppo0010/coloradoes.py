@@ -151,3 +151,19 @@ def command_hincrby(db, key, field, increment):
         db.set(_hash_field_key(db, id, field), data[:4] + str(new_value))
 
     return new_value
+
+def command_hincrbyfloat(db, key, field, increment):
+    id, type = db.get_key(key)[:2]
+    if type not in (None, TYPE):
+        raise ValueError(WRONG_TYPE)
+
+    if type is None:
+        new_value = float(increment)
+        id = db.set_key(key, TYPE)
+        _add(db, id, 0, field, str(new_value))
+    else:
+        data = db.get(_hash_field_key(db, id, field))
+        new_value = float(data[4:]) + float(increment)
+        db.set(_hash_field_key(db, id, field), data[:4] + str(new_value))
+
+    return new_value

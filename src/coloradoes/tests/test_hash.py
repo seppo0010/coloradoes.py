@@ -48,3 +48,11 @@ class TestHash(unittest.TestCase):
         self.values.append(self.database.command_hincrby('key', 'field', '1'))
         self.values.append(self.database.command_hget('key', 'field'))
         self.assertEqual(self.values, [1, 2, '2'])
+
+    def test_hincrbyfloat(self):
+        self.values.append(self.database.command_hincrbyfloat('key', 'field',
+                    '1.5'))
+        self.values.append(self.database.command_hincrbyfloat('key', 'field',
+                    '1.2'))
+        self.values.append(self.database.command_hget('key', 'field'))
+        self.assertEqual(self.values, [1.5, 2.7, '2.7'])
