@@ -64,3 +64,11 @@ class TestHash(unittest.TestCase):
                     'value2'))
         self.values.append(self.database.command_hkeys('key'))
         self.assertEqual(self.values, [True, True, ['field1', 'field2']])
+
+    def test_hset_hlen(self):
+        self.values.append(self.database.command_hset('key', 'field1',
+                    'value1'))
+        self.values.append(self.database.command_hset('key', 'field2',
+                    'value2'))
+        self.values.append(self.database.command_hlen('key'))
+        self.assertEqual(self.values, [True, True, 2])

@@ -181,3 +181,12 @@ def command_hkeys(db, key):
         field = db.get(_hash_index_key(db, id, position))
         retval.append(field)
     return retval
+
+def command_hlen(db, key):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return 0
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    return _get_info(db, id)['cardinality']
