@@ -42,3 +42,9 @@ class TestHash(unittest.TestCase):
         self.values.append(self.database.command_hgetall('key'))
         self.assertEqual(self.values, [True, True, ['field1', 'value1',
                 'field2', 'value2']])
+
+    def test_hincrby(self):
+        self.values.append(self.database.command_hincrby('key', 'field', '1'))
+        self.values.append(self.database.command_hincrby('key', 'field', '1'))
+        self.values.append(self.database.command_hget('key', 'field'))
+        self.assertEqual(self.values, [1, 2, '2'])
