@@ -17,6 +17,12 @@ class TestHash(unittest.TestCase):
         self.values.append(self.database.command_hget('key', 'field'))
         self.assertEqual(self.values, [None, True, 'value'])
 
+    def test_hsetnx_hget(self):
+        self.values.append(self.database.command_hsetnx('key', 'field', 'v1'))
+        self.values.append(self.database.command_hsetnx('key', 'field', 'v2'))
+        self.values.append(self.database.command_hget('key', 'field'))
+        self.assertEqual(self.values, [True, False, 'v1'])
+
     def test_hset_hdel(self):
         self.values.append(self.database.command_hset('key', 'field1',
                     'value1'))

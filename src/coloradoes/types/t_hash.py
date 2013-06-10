@@ -53,7 +53,7 @@ def _position(db, id, field):
 def _contains(db, id, field):
     return _position(db, id, field) is not None
 
-def command_hset(db, key, field, value, id=None):
+def command_hset(db, key, field, value, id=None, replace=True):
     if id is None:
         id, type = db.get_key(key)[:2]
         if type not in (None, TYPE):
@@ -64,12 +64,17 @@ def command_hset(db, key, field, value, id=None):
         position = 0
     else:
         position = _position(db, id, field)
+        if position is None:
+            position = _get_info(db, id)['cardinality']
+        elif not replace:
+            return False
 
-    if position is None:
-        position = _get_info(db, id)['cardinality']
     _set_info(db, id, position + 1)
     _add(db, id, position, field, value)
     return True
+
+def command_hsetnx(db, key, field, value):
+    return command_hset(db, key, field, value, replace=False)
 
 def command_hget(db, key, field, id=None):
     if id is None:
