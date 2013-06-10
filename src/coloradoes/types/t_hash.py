@@ -204,3 +204,20 @@ def command_hmget(db, key, *args):
         data = db.get(_hash_field_key(db, id, field))
         retval.append(None if data is None else data[4:])
     return retval
+
+def command_hmset(db, key, *args):
+    id, type = db.get_key(key)[:2]
+    if type not in (None, TYPE):
+        raise ValueError(WRONG_TYPE)
+
+    if len(args) % 2 != 0:
+        raise ValueError(WRONG_NUMBER_OF_ARGUMENTS.format('hmset'))
+
+    arguments = list(args)
+    while len(arguments) > 0:
+        field = arguments.pop(0)
+        value = arguments.pop(0)
+        command_hset(db, key, field, value, id=id)
+        if id is None:
+            id = db.get_key(key)[0]
+    return True

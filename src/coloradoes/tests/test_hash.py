@@ -81,3 +81,10 @@ class TestHash(unittest.TestCase):
         self.values.append(self.database.command_hmget('key', 'field1',
                     'field2', 'field3'))
         self.assertEqual(self.values, [True, True, ['value1', 'value2', None]])
+
+    def test_hmset_hmget(self):
+        self.values.append(self.database.command_hmset('key', 'field1',
+                    'value1', 'field2', 'value2'))
+        self.values.append(self.database.command_hmget('key', 'field1',
+                    'field2'))
+        self.assertEqual(self.values, [True, ['value1', 'value2']])
