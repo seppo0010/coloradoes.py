@@ -33,3 +33,12 @@ class TestHash(unittest.TestCase):
         self.values.append(self.database.command_hexists('key', 'field1'))
         self.values.append(self.database.command_hexists('key', 'field2'))
         self.assertEqual(self.values, [True, True, False])
+
+    def test_hset_hgetall(self):
+        self.values.append(self.database.command_hset('key', 'field1',
+                    'value1'))
+        self.values.append(self.database.command_hset('key', 'field2',
+                    'value2'))
+        self.values.append(self.database.command_hgetall('key'))
+        self.assertEqual(self.values, [True, True, ['field1', 'value1',
+                'field2', 'value2']])
