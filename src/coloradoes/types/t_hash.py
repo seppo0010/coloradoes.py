@@ -190,3 +190,17 @@ def command_hlen(db, key):
         raise ValueError(WRONG_TYPE)
 
     return _get_info(db, id)['cardinality']
+
+def command_hmget(db, key, *args):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return [None] * len(args)
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    cardinality = _get_info(db, id)['cardinality']
+    retval = []
+    for field in args:
+        data = db.get(_hash_field_key(db, id, field))
+        retval.append(None if data is None else data[4:])
+    return retval
