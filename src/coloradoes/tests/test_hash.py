@@ -26,3 +26,10 @@ class TestHash(unittest.TestCase):
                     'field1', 'field3'))
         self.values.append(self.database.command_hget('key', 'field2'))
         self.assertEqual(self.values, [True, True, 1, 'value2'])
+
+    def test_hset_hexists(self):
+        self.values.append(self.database.command_hset('key', 'field1',
+                    'value1'))
+        self.values.append(self.database.command_hexists('key', 'field1'))
+        self.values.append(self.database.command_hexists('key', 'field2'))
+        self.assertEqual(self.values, [True, True, False])

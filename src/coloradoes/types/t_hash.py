@@ -111,3 +111,12 @@ def command_hdel(db, key, *args, **kwargs):
             db.delete(_hash_index_key(db, id, last_position))
             del_count += 1
     return del_count
+
+def command_hexists(db, key, field):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return False
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    return _contains(db, id, field)
