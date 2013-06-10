@@ -167,3 +167,17 @@ def command_hincrbyfloat(db, key, field, increment):
         db.set(_hash_field_key(db, id, field), data[:4] + str(new_value))
 
     return new_value
+
+def command_hkeys(db, key):
+    id, type = db.get_key(key)[:2]
+    if type is None:
+        return []
+    elif type != TYPE:
+        raise ValueError(WRONG_TYPE)
+
+    cardinality = _get_info(db, id)['cardinality']
+    retval = []
+    for position in range(0, cardinality):
+        field = db.get(_hash_index_key(db, id, position))
+        retval.append(field)
+    return retval

@@ -56,3 +56,11 @@ class TestHash(unittest.TestCase):
                     '1.2'))
         self.values.append(self.database.command_hget('key', 'field'))
         self.assertEqual(self.values, [1.5, 2.7, '2.7'])
+
+    def test_hset_hkeys(self):
+        self.values.append(self.database.command_hset('key', 'field1',
+                    'value1'))
+        self.values.append(self.database.command_hset('key', 'field2',
+                    'value2'))
+        self.values.append(self.database.command_hkeys('key'))
+        self.assertEqual(self.values, [True, True, ['field1', 'field2']])
